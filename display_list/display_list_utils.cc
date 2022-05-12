@@ -85,8 +85,8 @@ void SkPaintDispatchHelper::setColorFilter(const DlColorFilter* filter) {
   color_filter_ = filter ? filter->shared() : nullptr;
   paint_.setColorFilter(makeColorFilter());
 }
-void SkPaintDispatchHelper::setPathEffect(const DlPathEffect* effect) {
-  paint_.setPathEffect(effect ? effect->skia_object() : nullptr);
+void SkPaintDispatchHelper::setPathEffect(sk_sp<SkPathEffect> effect) {
+  paint_.setPathEffect(effect);
 }
 void SkPaintDispatchHelper::setMaskFilter(const DlMaskFilter* filter) {
   paint_.setMaskFilter(filter ? filter->skia_object() : nullptr);
@@ -277,8 +277,8 @@ void DisplayListBoundsCalculator::setImageFilter(const DlImageFilter* filter) {
 void DisplayListBoundsCalculator::setColorFilter(const DlColorFilter* filter) {
   color_filter_ = filter ? filter->shared() : nullptr;
 }
-void DisplayListBoundsCalculator::setPathEffect(const DlPathEffect* effect) {
-  path_effect_ = effect ? effect->shared() : nullptr;
+void DisplayListBoundsCalculator::setPathEffect(sk_sp<SkPathEffect> effect) {
+  path_effect_ = std::move(effect);
 }
 void DisplayListBoundsCalculator::setMaskFilter(const DlMaskFilter* filter) {
   mask_filter_ = filter ? filter->shared() : nullptr;
@@ -580,13 +580,14 @@ bool DisplayListBoundsCalculator::AdjustBoundsForPaint(
   if (flags.is_geometric()) {
     // Path effect occurs before stroking...
     DisplayListSpecialGeometryFlags special_flags =
-        flags.WithPathEffect(path_effect_.get());
+        flags.WithPathEffect(path_effect_);
     if (path_effect_) {
-      auto effect_bounds = path_effect_->effect_bounds(bounds);
-      if (!effect_bounds.has_value()) {
+      SkPaint p;
+      p.setPathEffect(path_effect_);
+      if (!p.canComputeFastBounds()) {
         return false;
       }
-      bounds = effect_bounds.value();
+      bounds = p.computeFastBounds(bounds, &bounds);
     }
 
     if (flags.is_stroked(style_)) {
