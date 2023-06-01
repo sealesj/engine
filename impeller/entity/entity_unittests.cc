@@ -23,9 +23,9 @@
 #include "impeller/entity/contents/filters/inputs/filter_input.h"
 #include "impeller/entity/contents/linear_gradient_contents.h"
 #include "impeller/entity/contents/radial_gradient_contents.h"
-#include "impeller/entity/contents/rrect_shadow_contents.h"
 #include "impeller/entity/contents/runtime_effect_contents.h"
 #include "impeller/entity/contents/solid_color_contents.h"
+#include "impeller/entity/contents/solid_rrect_blur_contents.h"
 #include "impeller/entity/contents/sweep_gradient_contents.h"
 #include "impeller/entity/contents/text_contents.h"
 #include "impeller/entity/contents/texture_contents.h"
@@ -53,6 +53,9 @@
 #include "include/core/SkBlendMode.h"
 #include "third_party/imgui/imgui.h"
 #include "third_party/skia/include/core/SkTextBlob.h"
+
+// TODO(zanderso): https://github.com/flutter/flutter/issues/127701
+// NOLINTBEGIN(bugprone-unchecked-optional-access)
 
 namespace impeller {
 namespace testing {
@@ -1365,8 +1368,7 @@ TEST_P(EntityTest, DrawAtlasNoColor) {
 }
 
 TEST_P(EntityTest, DrawAtlasWithColorAdvanced) {
-  // Draws the image as four squares stiched together. Because blend modes
-  // aren't implented this ends up as four solid color blocks.
+  // Draws the image as four squares stiched together.
   auto atlas = CreateTextureForFixture("bay_bridge.jpg");
   auto size = atlas->GetSize();
   // Divide image into four quadrants.
@@ -1712,7 +1714,7 @@ TEST_P(EntityTest, RRectShadowTest) {
     auto rect =
         Rect::MakeLTRB(top_left.x, top_left.y, bottom_right.x, bottom_right.y);
 
-    auto contents = std::make_unique<RRectShadowContents>();
+    auto contents = std::make_unique<SolidRRectBlurContents>();
     contents->SetRRect(rect, corner_radius);
     contents->SetColor(color);
     contents->SetSigma(Radius(blur_radius));
@@ -2638,3 +2640,5 @@ TEST_P(EntityTest, PointFieldGeometryDivisions) {
 
 }  // namespace testing
 }  // namespace impeller
+
+// NOLINTEND(bugprone-unchecked-optional-access)
